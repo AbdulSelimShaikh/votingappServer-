@@ -17,7 +17,7 @@ const Server = http.createServer(app);
 const PORT = 8000;
 
 // Database Connection
-require("./connection");
+require("./connection"); // Ensure the database is connected correctly
 
 // Models
 const Questions = require("./models/questionModel");
@@ -26,6 +26,8 @@ const Questions = require("./models/questionModel");
 const io = new SocketServer(Server, {
   cors: {
     origin: "https://votingappclient.vercel.app", // Specify the client URL in production
+    methods: ["GET", "POST"],
+    allowedHeaders: ["Content-Type", "Authorization"], // Add headers if needed
   },
 });
 
