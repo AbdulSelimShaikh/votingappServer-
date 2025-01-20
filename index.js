@@ -6,7 +6,11 @@ const { Server: SocketServer } = require("socket.io");
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: "https://votingappclient.vercel.app", // Specify the client URL in production
+  })
+);
 app.use(express.json()); // Parse JSON request body
 
 const Server = http.createServer(app);
@@ -21,7 +25,7 @@ const Questions = require("./models/questionModel");
 // Initialize Socket.io with CORS configuration
 const io = new SocketServer(Server, {
   cors: {
-    origin: "*", // Allow all origins (consider restricting in production)
+    origin: "https://votingappclient.vercel.app", // Specify the client URL in production
   },
 });
 
@@ -50,6 +54,7 @@ async function updateVote(id, answer) {
     if (result.nModified === 0) {
       throw new Error("Vote not found or not updated");
     }
+    return result;
   } catch (error) {
     console.error("Error while updating DB:", error.message);
     throw new Error("Error while updating a vote");
@@ -115,7 +120,12 @@ io.on("connection", (socket) => {
       await updateVote(data.id, data.answer);
 
       // Emit the updated vote to all connected clients
-      io.emit("answer:output", { id: data.id, answer: data.answer });
+      const updatedVote = await Questions.findById(data.id);
+      io.emit("answer:output", {
+        id: data.id,
+        yes: updatedVote.yes,
+        no: updatedVote.no,
+      });
     } catch (error) {
       console.error("Error processing vote input:", error.message);
     }
